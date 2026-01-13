@@ -1,0 +1,24 @@
+{
+  "name": "campaigns",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "vite build && vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "^10.0.0",
+    "@primeuix/themes": "2.0.2",
+    "primevue": "4.5.4",
+    "vue": "3.5.26",
+    "vue-router": "4.6.4"
+  },
+  "devDependencies": {
+    "@module-federation/vite": "1.9.4",
+    "@vitejs/plugin-vue": "6.0.3",
+    "axios": "1.13.2",
+    "vite": "7.3.1",
+    "vite-plugin-vue-devtools": "8.0.5"
+  }
+}
