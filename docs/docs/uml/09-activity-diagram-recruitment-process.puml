@@ -1,0 +1,70 @@
+@startuml Recruitment Process - Activity Diagram
+skinparam activityDiamondBackgroundColor #lightblue
+
+title Recruitment Process Flow (Implemented Features)
+
+start
+
+:Create Recruitment Campaign;
+note right
+  - Set campaign name
+  - Define date range
+  - Select interview template
+  - Select form template
+  - Add locations
+  - Define blocked periods
+end note
+
+fork
+  :Candidates submit\napplications;
+  
+  :Validate candidate\ninformation;
+  
+  if (Application valid?) then (yes)
+    :Create Candidate\nrecord;
+    :Set status: Open;
+  else (no)
+    :Reject application;
+    stop
+  endif
+  
+fork again
+  :Volunteers register\navailability;
+  
+  :Create Volunteer\nDisponibility records;
+  
+end fork
+
+:Coordinator reviews\napplications;
+
+:Schedule interview;
+note right
+  System validates:
+  - Volunteer availability
+  - Blocked periods
+end note
+
+:Create Interview;
+:Assign interviewers;
+
+:Conduct Interview;
+
+:Coordinator updates\ninterview notes;
+
+:Coordinator updates\ncandidate status;
+
+if (Candidate accepted?) then (yes)
+  :Update status:\n"Accepted";
+  note right
+    Coordinator manually creates
+    Volunteer record if needed
+  end note
+else (no)
+  :Update status:\n"Rejected";
+endif
+
+:Campaign continues\nuntil complete;
+
+stop
+
+@enduml

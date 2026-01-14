@@ -1,0 +1,89 @@
+@startuml Component Diagram - Recruitment Service
+skinparam component {
+    BackgroundColor<<service>> #85bbf0
+    BackgroundColor<<listener>> #ffc570
+    BackgroundColor<<repository>> #c9e2ae
+    BackgroundColor<<producer>> #f96854
+    FontColor black
+}
+
+title Component Diagram - Recruitment Service Container
+
+package "Recruitment Service [ASP.NET Core]" {
+    
+    component "RabbitMQ\nListener" as listener <<listener>>
+    
+    package "Domain Services" {
+        component "Candidate\nService" as candidate_svc <<service>>
+        component "Volunteer\nService" as volunteer_svc <<service>>
+        component "Interview\nService" as interview_svc <<service>>
+        component "Campaign\nService" as campaign_svc <<service>>
+        component "Location\nService" as location_svc <<service>>
+        component "Template\nServices" as template_svc <<service>>
+        component "Disponibility\nService" as disp_svc <<service>>
+    }
+    
+    component "Data Context\n[EF Core]" as dbcontext <<repository>>
+    
+    component "Kafka\nProducer" as kafka_producer <<producer>>
+}
+
+component "RabbitMQ" as rabbitmq
+database "PostgreSQL" as postgres
+component "Kafka" as kafka
+
+rabbitmq --> listener : Delivers messages\n(AMQP)
+
+listener --> candidate_svc : CreateCandidate\nGetCandidates
+listener --> volunteer_svc : CreateVolunteer\nGetVolunteers
+listener --> interview_svc : ScheduleInterview\nGetInterviews
+listener --> campaign_svc : CreateCampaign\nGetCampaigns
+listener --> location_svc : CreateLocation\nGetLocations
+listener --> template_svc : GetTemplates
+listener --> disp_svc : RegisterDisponibility
+
+candidate_svc --> dbcontext : SaveChangesAsync()
+volunteer_svc --> dbcontext : SaveChangesAsync()
+interview_svc --> dbcontext : SaveChangesAsync()
+campaign_svc --> dbcontext : SaveChangesAsync()
+location_svc --> dbcontext : SaveChangesAsync()
+
+dbcontext --> postgres : SQL queries\n(TCP 5432)
+
+candidate_svc --> kafka_producer : PublishEventAsync()
+volunteer_svc --> kafka_producer : PublishEventAsync()
+interview_svc --> kafka_producer : PublishEventAsync()
+campaign_svc --> kafka_producer : PublishEventAsync()
+
+kafka_producer --> kafka : Produces events
+
+listener --> rabbitmq : Sends RPC response\n(AMQP)
+
+note right of listener
+    - Consumes messages from queue
+    - Deserializes commands/queries
+    - Routes to appropriate service
+    - Returns responses via RPC
+end note
+
+note right of dbcontext
+    - DbSet<Candidate>
+    - DbSet<Volunteer>
+    - DbSet<Interview>
+    - DbSet<Campaign>
+    - Entity mappings
+    - Migrations
+end note
+
+note right of kafka_producer
+    Publishes to topics:
+    - candidate_updates
+    - campaign_updates
+    - campaign_volunteer_updates
+    - schedule_updates
+    - location_updates
+    - interview_template_updates
+    - recruitment_form_template_updates
+end note
+
+@enduml

@@ -1,0 +1,117 @@
+@startuml Deployment Diagram
+skinparam componentStyle rectangle
+
+title Deployment Diagram - Docker Compose Environment
+
+node "Docker Host" {
+    
+    package "volunteer-network" {
+        
+        node "nginx:alpine\n:8080" as nginx {
+            component "NGINX\nReverse Proxy" as nginx_comp
+        }
+        
+        node "frontend" as frontend_node {
+            component "Vue.js Apps" as frontend_comp
+        }
+        
+        node "api-gateway" as gateway_node {
+            component "API Gateway\nASP.NET Core" as gateway_comp
+            artifact "CQRS Handlers" as cqrs
+            artifact "Authentication" as auth
+        }
+        
+        node "recruitment-service" as recruitment_node {
+            component "Recruitment Service\nASP.NET Core" as recruitment_comp
+            artifact "Domain Services" as services
+            artifact "Entity Framework" as ef
+        }
+        
+        node "notification-service" as notification_node {
+            component "Notification Service\nASP.NET Core" as notification_comp
+            artifact "SignalR Hub" as signalr
+            artifact "Kafka Consumer" as kafka_consumer
+        }
+        
+        node "postgres" as postgres_node {
+            database "PostgreSQL" as postgres_db
+            folder "./data/postgres" as pg_volume
+        }
+        
+        node "rabbitmq:4\n:5672, :15672" as rabbitmq_node {
+            queue "RabbitMQ" as rabbitmq_comp
+        }
+        
+        node "kafka:4.1.1\n:9092, :9094" as kafka_node {
+            queue "Apache Kafka" as kafka_comp
+        }
+        
+        node "redpanda-console\n:7777" as console_node {
+            component "Kafka UI" as console_comp
+        }
+        
+        node "init-data\n(seeding job)" as init_node {
+            component "Init Data Seeder" as init_comp
+        }
+    }
+}
+
+
+cloud "Internet" as internet {
+    actor "End Users" as users
+}
+
+cloud "Google Cloud" as google {
+    component "Google OAuth 2.0" as google_oauth
+}
+
+' Connections
+users --> nginx : HTTPS/HTTP
+nginx_comp --> frontend_comp : Serve static
+nginx_comp --> gateway_comp : Proxy /api/*
+nginx_comp --> notification_comp : Proxy /notifications
+
+gateway_comp --> rabbitmq_comp : AMQP (RPC)
+gateway_comp --> google_oauth : OAuth 2.0
+
+recruitment_comp --> postgres_db : TCP 5432
+recruitment_comp <--> rabbitmq_comp : AMQP
+recruitment_comp --> kafka_comp : Kafka
+
+kafka_comp <-- notification_comp : Consume
+notification_comp <--> frontend_comp : WebSocket
+
+kafka_comp <-- console_comp : Monitor
+
+init_comp --> nginx_comp : Seed mock data via HTTP
+
+postgres_db --> pg_volume : Persist
+
+note right of nginx
+  External Port: 8080
+  Routes all traffic
+end note
+
+note right of rabbitmq_node
+  Synchronous RPC
+  Request-Reply
+  Queue: recruitment_queue
+end note
+
+note right of kafka_node
+    Asynchronous events on topics such as:
+    - candidate_updates
+    - campaign_updates
+    - campaign_volunteer_updates
+    - schedule_updates
+    - location_updates
+    - interview_template_updates
+    - recruitment_form_template_updates
+end note
+
+note bottom of postgres_node
+  Volume Mount:
+  ./data/postgres
+end note
+
+@enduml

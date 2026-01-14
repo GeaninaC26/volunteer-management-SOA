@@ -1,0 +1,240 @@
+@startuml Recruitment Service - Class Diagram
+
+title Recruitment Service Architecture
+
+package "Messaging Layer" {
+    class RabbitMQListener {
+        - _configuration: IConfiguration
+        - _logger: ILogger
+        - _serviceProvider: IServiceProvider
+        - _connection: IConnection
+        - _channel: IChannel
+        --
+        + ExecuteAsync(stoppingToken: CancellationToken): Task
+        - HandleMessage(message: Message, replyQueue: string, correlationId: string): Task<object>
+        - ProcessCommand(actionType: string, data: JsonNode): Task<object>
+    }
+
+    class KafkaProducer {
+        - _configuration: IConfiguration
+        - _logger: ILogger
+        --
+        + PublishEventAsync<T>(topic: string, event: T): Task
+        - CreateProducer(): IProducer<string, string>
+    }
+
+    class Message<T> {
+        + ActionType: string
+        + Data: T
+    }
+}
+
+package "Service Layer" {
+    class CandidateService {
+        - _context: DataContext
+        - _kafkaProducer: KafkaProducer
+        - _logger: ILogger
+        --
+        + GetCandidatesAsync(campaignId: int?, status: string?): Task<List<Candidate>>
+        + GetCandidateByIdAsync(id: int): Task<Candidate?>
+        + CreateCandidateAsync(candidate: Candidate): Task<int>
+        + UpdateCandidateAsync(id: int, candidate: Candidate): Task<int>
+        + DeleteCandidateAsync(id: int): Task<int>
+        + PatchCandidateAsync(id: int, patch: CandidatePatch): Task<int>
+    }
+
+    class VolunteerService {
+        - _context: DataContext
+        - _kafkaProducer: KafkaProducer
+        - _logger: ILogger
+        --
+        + GetVolunteersAsync(department: string?, status: string?): Task<List<Volunteer>>
+        + GetVolunteerByIdAsync(id: int): Task<Volunteer?>
+        + CreateVolunteerAsync(volunteer: Volunteer): Task<int>
+        + UpdateVolunteerAsync(id: int, volunteer: Volunteer): Task<int>
+        + DeleteVolunteerAsync(id: int): Task<int>
+    }
+
+    class InterviewService {
+        - _context: DataContext
+        - _kafkaProducer: KafkaProducer
+        - _logger: ILogger
+        --
+        + GetInterviewsAsync(campaignId: int?, candidateId: int?): Task<List<Interview>>
+        + CreateInterviewAsync(interview: Interview): Task<int>
+        + UpdateInterviewAsync(id: int, interview: Interview): Task<int>
+        + DeleteInterviewAsync(id: int): Task<int>
+        + AssignInterviewersAsync(interviewId: int, volunteerIds: List<int>): Task
+    }
+
+    class RecruitmentService {
+        - _context: DataContext
+        - _kafkaProducer: KafkaProducer
+        - _logger: ILogger
+        --
+        + GetCampaignsAsync(): Task<List<RecruitmentCampaign>>
+        + GetCampaignByIdAsync(id: int): Task<RecruitmentCampaign?>
+        + CreateCampaignAsync(campaign: RecruitmentCampaign): Task<int>
+        + UpdateCampaignAsync(id: int, campaign: RecruitmentCampaign): Task<int>
+        + DeleteCampaignAsync(id: int): Task<int>
+    }
+
+    class LocationService {
+        - _context: DataContext
+        --
+        + GetLocationsAsync(campaignId: int?): Task<List<Location>>
+        + CreateLocationAsync(location: Location): Task<int>
+        + UpdateLocationAsync(id: int, location: Location): Task<int>
+    }
+
+    class InterviewTemplateService {
+        - _context: DataContext
+        --
+        + GetTemplatesAsync(): Task<List<InterviewTemplate>>
+        + CreateTemplateAsync(template: InterviewTemplate): Task<int>
+    }
+
+    class RecruitmentFormTemplateService {
+        - _context: DataContext
+        --
+        + GetFormTemplatesAsync(): Task<List<RecruitmentFormTemplate>>
+        + CreateFormTemplateAsync(template: RecruitmentFormTemplate): Task<int>
+    }
+
+    class VolunteerDisponibilityService {
+        - _context: DataContext
+        --
+        + GetDisponibilitiesAsync(volunteerId: int?, campaignId: int?): Task<List<VolunteerDisponibility>>
+        + CreateDisponibilityAsync(disponibility: VolunteerDisponibility): Task<int>
+        + DeleteDisponibilityAsync(id: int): Task<int>
+    }
+}
+
+package "Data Access Layer" {
+    class DataContext {
+        + Candidates: DbSet<Candidate>
+        + Volunteers: DbSet<Volunteer>
+        + Interviews: DbSet<Interview>
+        + RecruitmentCampaigns: DbSet<RecruitmentCampaign>
+        + Locations: DbSet<Location>
+        + InterviewTemplates: DbSet<InterviewTemplate>
+        + RecruitmentFormTemplates: DbSet<RecruitmentFormTemplate>
+        + VolunteerDisponibilities: DbSet<VolunteerDisponibility>
+        + BlockedPeriods: DbSet<BlockedPeriod>
+        --
+        + OnModelCreating(modelBuilder: ModelBuilder): void
+    }
+
+    class "DbContext" as EFDbContext {
+        {abstract} + SaveChangesAsync(): Task<int>
+        {abstract} + OnModelCreating(modelBuilder: ModelBuilder): void
+    }
+}
+
+package "Domain Model" {
+    class Candidate {
+        + Id: int
+        + FirstName: string
+        + LastName: string
+        + PersonalEmail: string
+        + Phone: string
+        + PersonalInfo: PersonalInfo
+        + RecruitingStatus: RecruitingStatus
+        + RecruitmentCampaignId: int
+        + AnswersToForm: List<string>
+        + SchedulerId: int
+    }
+
+    class Volunteer {
+        + Id: int
+        + FirstName: string
+        + LastName: string
+        + PersonalEmail: string
+        + Phone: string
+        + Email: string?
+        + PersonalInfo: PersonalInfo
+        + VolunteerStatus: VolunteerStatus
+        + Department: Department
+    }
+
+    class Interview {
+        + Id: int
+        + CandidateId: int
+        + RecruitmentCampaignId: int
+        + LocationId: int
+        + Date: DateOnly
+        + StartTime: TimeOnly
+        + EndTime: TimeOnly
+        + InterviewType: InterviewType
+        + Notes: string
+        + Interviewers: List<Volunteer>
+    }
+
+    class RecruitmentCampaign {
+        + Id: int
+        + Name: string
+        + StartDate: DateOnly
+        + EndDate: DateOnly
+        + InterviewTemplateId: int
+        + RecruitmentFormTemplateId: int
+        + Locations: List<Location>
+        + BlockedPeriods: List<BlockedPeriod>
+        + Candidates: List<Candidate>
+        + Volunteers: List<Volunteer>
+    }
+}
+
+' Relationships
+RabbitMQListener --> CandidateService : uses
+RabbitMQListener --> VolunteerService : uses
+RabbitMQListener --> InterviewService : uses
+RabbitMQListener --> RecruitmentService : uses
+RabbitMQListener --> LocationService : uses
+RabbitMQListener ..> Message : receives
+
+CandidateService --> DataContext : uses
+CandidateService --> KafkaProducer : publishes events
+CandidateService ..> Candidate : manages
+
+VolunteerService --> DataContext : uses
+VolunteerService --> KafkaProducer : publishes events
+VolunteerService ..> Volunteer : manages
+
+InterviewService --> DataContext : uses
+InterviewService --> KafkaProducer : publishes events
+InterviewService ..> Interview : manages
+
+RecruitmentService --> DataContext : uses
+RecruitmentService --> KafkaProducer : publishes events
+RecruitmentService ..> RecruitmentCampaign : manages
+
+LocationService --> DataContext : uses
+InterviewTemplateService --> DataContext : uses
+RecruitmentFormTemplateService --> DataContext : uses
+VolunteerDisponibilityService --> DataContext : uses
+
+DataContext --|> EFDbContext : extends
+DataContext --> Candidate : DbSet
+DataContext --> Volunteer : DbSet
+DataContext --> Interview : DbSet
+DataContext --> RecruitmentCampaign : DbSet
+
+note right of RabbitMQListener
+  Listens to 'recruitment_queue'
+  Deserializes messages
+  Routes to appropriate service
+  Returns response via RPC
+end note
+
+note bottom of KafkaProducer
+  Publishes to topics with campaign name as payload:
+  - candidate_updates
+  - campaign_updates
+  - campaign_volunteer_updates
+  - schedule_updates
+  - location_updates
+  - interview_template_updates
+  - recruitment_form_template_updates
+end note
+
+@enduml

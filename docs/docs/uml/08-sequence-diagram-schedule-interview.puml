@@ -1,0 +1,93 @@
+@startuml Schedule Interview Flow
+autonumber
+
+title Schedule Interview - Complex Business Flow
+
+actor "Coordinator" as coordinator
+participant "Scheduling\nApp" as frontend
+participant "API Gateway" as gateway
+participant "RabbitMQ" as rabbitmq
+participant "Recruitment\nService" as recruitment
+database "PostgreSQL" as db
+participant "Kafka" as kafka
+participant "Notification\nService" as notification
+participant "SignalR\nHub" as signalr
+
+coordinator -> frontend: Select candidate,\ndate, time, location,\ninterviewers
+activate frontend
+
+frontend -> frontend: Validate input
+
+frontend -> gateway: POST /api/interviews\n(Interview DTO)
+activate gateway
+
+gateway -> gateway: Authorize request\n(Check permissions)
+
+gateway -> gateway: CreateInterviewCommand
+
+gateway -> rabbitmq: RPC: CreateInterview\n(CorrelationId)
+activate rabbitmq
+
+rabbitmq -> recruitment: Deliver command
+activate recruitment
+
+recruitment -> recruitment: Validate interview data:\n- Check candidate exists\n- Check blocked periods
+
+recruitment -> db: BEGIN TRANSACTION
+activate db
+
+recruitment -> db: SELECT volunteer_disponibilities\nWHERE volunteer_id IN (...)\nAND datetime = ?
+db --> recruitment: Disponibilities
+
+recruitment -> recruitment: Verify all interviewers\navailable at time
+
+recruitment -> db: INSERT INTO interviews
+db --> recruitment: Interview ID
+
+recruitment -> db: INSERT INTO interview_volunteers\n(Many-to-many)
+db --> recruitment: Relationships created
+
+recruitment -> db: COMMIT TRANSACTION
+deactivate db
+
+recruitment -> kafka: Publish to topic\n"schedule_updates"\n(campaign name as payload)
+activate kafka
+
+kafka --> recruitment: Published
+deactivate kafka
+
+recruitment -> rabbitmq: RPC Response\n(Interview ID, CorrelationId)
+rabbitmq --> gateway: Deliver response
+deactivate rabbitmq
+
+gateway --> frontend: HTTP 200 OK\n(Interview ID)
+deactivate gateway
+
+frontend --> coordinator: Show confirmation:\n"Interview scheduled"
+deactivate frontend
+
+... Asynchronous Notification Flow ...
+
+kafka -> notification: Consume from topic\n"schedule_updates"
+activate notification
+
+notification -> notification: Route notification\nto /schedule_interviews page
+
+notification -> signalr: Broadcast to connected clients\non /schedule_interviews page
+activate signalr
+
+signalr -> frontend: Push notification\ntype: "schedule_update"
+activate frontend
+
+frontend --> coordinator: Refresh schedule UI
+deactivate frontend
+deactivate signalr
+deactivate notification
+
+note right of recruitment
+  Business Rules:
+  1. Interviewers must have disponibility
+  2. Date must not be in blocked period
+end note
+
+@enduml

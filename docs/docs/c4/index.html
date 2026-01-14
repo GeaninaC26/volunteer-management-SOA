@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C4 Model Documentation - Volunteer Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .intro {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .intro h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        .diagram-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .diagram-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .diagram-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .diagram-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .diagram-info {
+            padding: 1.5rem;
+        }
+        
+        .diagram-info h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+        
+        .diagram-info p {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+        
+        .diagram-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .diagram-links a {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-png {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .btn-png:hover {
+            background: #38a169;
+        }
+        
+        .btn-source {
+            background: #ed8936;
+            color: white;
+        }
+        
+        .btn-source:hover {
+            background: #dd6b20;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            background: white;
+            margin-top: 3rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #f0f0f0;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        .badge-level1 {
+            background: #e6f7ff;
+            color: #0066cc;
+        }
+        
+        .badge-level2 {
+            background: #f0f5ff;
+            color: #4c6ef5;
+        }
+        
+        .badge-level3 {
+            background: #f3f0ff;
+            color: #7950f2;
+        }
+        
+        .badge-deployment {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        
+        @media (max-width: 768px) {
+            .diagram-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>C4 Model Documentation</h1>
+        <p>Volunteer Management System - Architectural Views</p>
+    </header>
+
+    <div class="container">
+        <div class="intro">
+            <h2>About C4 Models</h2>
+            <p>
+                The C4 model provides hierarchical views of the system architecture at different levels of abstraction.
+                From the big picture (Context) down to the details (Components), each diagram is optimized for different audiences.
+            </p>
+            <p style="margin-top: 1rem;">
+                <strong>Levels:</strong> Context (system boundaries) → Container (runtime components) → Component (internal structure) → Deployment (infrastructure)
+            </p>
+        </div>
+
+        <div class="diagram-grid">
+            <div class="diagram-card">
+                <img src="System Context Diagram.png" alt="System Context">
+                <div class="diagram-info">
+                    <h3>System Context Diagram</h3>
+                    <span class="badge badge-level1">Level 1 - Context</span>
+                    <p>System boundary showing external actors (coordinators, candidates, volunteers, admins) and dependencies (Google OAuth 2.0).</p>
+                    <div class="diagram-links">
+                        <a href="System Context Diagram.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="01-context-diagram.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Container Diagram.png" alt="Container Diagram">
+                <div class="diagram-info">
+                    <h3>Container Diagram</h3>
+                    <span class="badge badge-level2">Level 2 - Container</span>
+                    <p>Runtime containers including Vue.js microfrontends, NGINX, API Gateway, Recruitment Service, Notification Service, PostgreSQL, RabbitMQ, Kafka, and auxiliary containers (Kafka console and init-data seeding job).</p>
+                    <div class="diagram-links">
+                        <a href="Container Diagram.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="02-container-diagram.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Component Diagram - API Gateway.png" alt="API Gateway Components">
+                <div class="diagram-info">
+                    <h3>API Gateway - Components</h3>
+                    <span class="badge badge-level3">Level 3 - Component</span>
+                    <p>Internal structure: REST endpoints, CQRS with MediatR, RabbitMQ RPC producer, authentication (JWT, OAuth, Cookie), and authorization policies.</p>
+                    <div class="diagram-links">
+                        <a href="Component Diagram - API Gateway.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="03-component-diagram-api-gateway.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Component Diagram - Recruitment Service.png" alt="Recruitment Service Components">
+                <div class="diagram-info">
+                    <h3>Recruitment Service - Components</h3>
+                    <span class="badge badge-level3">Level 3 - Component</span>
+                    <p>Internal structure: RabbitMQ listener, domain services (candidates, volunteers, interviews, campaigns), EF Core data context, and Kafka event publisher.</p>
+                    <div class="diagram-links">
+                        <a href="Component Diagram - Recruitment Service.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="04-component-diagram-recruitment-service.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Component Diagram - Notification Service.png" alt="Notification Service Components">
+                <div class="diagram-info">
+                    <h3>Notification Service - Components</h3>
+                    <span class="badge badge-level3">Level 3 - Component</span>
+                    <p>Internal structure: Kafka consumer for events, notification transformer, and SignalR hub for WebSocket-based real-time updates to frontend clients.</p>
+                    <div class="diagram-links">
+                        <a href="Component Diagram - Notification Service.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="05-component-diagram-notification-service.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Deployment Diagram - C4 Style.png" alt="Deployment Diagram">
+                <div class="diagram-info">
+                    <h3>Deployment Diagram</h3>
+                    <span class="badge badge-deployment">Deployment</span>
+                    <p>Docker Compose infrastructure showing bridge network, service discovery, exposed ports, volume mounts, and health checks for production deployment.</p>
+                    <div class="diagram-links">
+                        <a href="Deployment Diagram - C4 Style.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="06-deployment-diagram.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="intro">
+            <h2>Architecture Decisions</h2>
+            <ul style="margin-left: 2rem; margin-top: 1rem;">
+                <li><strong>Microservices:</strong> Single-responsibility services with independent deployment and scaling</li>
+                <li><strong>CQRS:</strong> Separate read and write models for better performance and maintainability</li>
+                <li><strong>Event-Driven:</strong> Loose coupling through asynchronous event publishing</li>
+                <li><strong>Microfrontends:</strong> Independent frontend modules with on-demand loading via Module Federation</li>
+            </ul>
+        </div>
+
+        <div class="intro">
+            <h2>Technology Stack</h2>
+            <ul style="margin-left: 2rem; margin-top: 1rem;">
+                <li><strong>Frontend:</strong> Vue.js 3, Vite, Module Federation</li>
+                <li><strong>Backend:</strong> ASP.NET Core 8.0, Entity Framework Core, MediatR</li>
+                <li><strong>Messaging:</strong> RabbitMQ (RPC), Apache Kafka (Events)</li>
+                <li><strong>Database:</strong> PostgreSQL</li>
+                <li><strong>Real-time:</strong> SignalR</li>
+                <li><strong>Infrastructure:</strong> NGINX, Docker Compose</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <p>Volunteer Management System - C4 Model Documentation</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Generated with PlantUML | January 2026</p>
+    </footer>
+</body>
+</html>

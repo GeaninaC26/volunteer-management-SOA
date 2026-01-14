@@ -1,0 +1,75 @@
+@startuml Volunteer Management System - Component Diagram
+skinparam componentStyle rectangle
+
+title Component Diagram - Volunteer Management System
+
+actor "User" as user
+actor "Volunteer" as volunteer
+
+package "Frontend Layer" {
+    component "Host App\n(Vue.js)" as host_app
+    component "Campaigns App\n(Vue.js)" as campaigns_app
+    component "Registration App\n(Vue.js)" as registration_app
+    component "Scheduling App\n(Vue.js)" as scheduling_app
+}
+
+package "Reverse Proxy" {
+    component "NGINX\nWeb Server" as nginx
+}
+
+package "Backend Services" {
+    component "API Gateway\n(ASP.NET Core)" as api_gateway
+    component "Recruitment Service\n(ASP.NET Core)" as recruitment_service
+    component "Notification Service\n(ASP.NET Core)" as notification_service
+}
+
+package "Message Brokers" {
+    queue "RabbitMQ" as rabbitmq
+    queue "Apache Kafka" as kafka
+}
+
+package "Data Storage" {
+    database "PostgreSQL" as postgres
+}
+
+' Frontend interactions
+user --> host_app : HTTPS
+volunteer --> host_app : HTTPS
+
+host_app ..> campaigns_app : Module Federation
+host_app ..> registration_app : Module Federation
+host_app ..> scheduling_app : Module Federation
+
+' NGINX routing
+campaigns_app --> nginx : HTTPS/JSON
+registration_app --> nginx : HTTPS/JSON
+scheduling_app --> nginx : HTTPS/JSON
+
+nginx --> api_gateway : Routes /api/*
+nginx --> notification_service : Routes /notifications\n(WebSocket)
+
+' API Gateway interactions
+api_gateway --> rabbitmq : AMQP RPC\n(commands/queries)
+
+' Recruitment Service
+rabbitmq --> recruitment_service : Delivers messages
+recruitment_service --> rabbitmq : Sends responses
+recruitment_service --> postgres : Entity Framework Core
+recruitment_service --> kafka : Publishes events
+
+' Notification Service
+kafka --> notification_service : Consumes events
+notification_service ..> campaigns_app : SignalR/WebSocket
+notification_service ..> scheduling_app : SignalR/WebSocket
+
+note right of rabbitmq
+  Synchronous RPC
+  Request-Reply pattern
+end note
+
+note right of kafka
+  Asynchronous Events
+  Pub-Sub pattern
+end note
+
+@enduml

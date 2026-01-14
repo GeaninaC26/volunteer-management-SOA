@@ -1,0 +1,192 @@
+@startuml Domain Model - Class Diagram
+skinparam classAttributeIconSize 0
+
+title Domain Model - Core Entities
+
+package "Recruitment Domain" {
+    class RecruitmentCampaign {
+        + Id: int
+        + Name: string
+        + StartDate: DateOnly
+        + EndDate: DateOnly
+        + InterviewTemplateId: int
+        + RecruitmentFormTemplateId: int
+        + Locations: List<Location>
+        + BlockedPeriods: List<BlockedPeriod>
+        + Candidates: List<Candidate>
+        + Volunteers: List<Volunteer>
+    }
+
+    class Candidate {
+        + Id: int
+        + FirstName: string
+        + LastName: string
+        + PersonalEmail: string
+        + Phone: string
+        + PersonalInfo: PersonalInfo
+        + RecruitingStatus: RecruitingStatus
+        + RecruitmentCampaignId: int
+        + AnswersToForm: List<string>
+        + SchedulerId: int
+    }
+
+    class Volunteer {
+        + Id: int
+        + FirstName: string
+        + LastName: string
+        + PersonalEmail: string
+        + Phone: string
+        + Email: string?
+        + PersonalInfo: PersonalInfo
+        + VolunteerStatus: VolunteerStatus
+        + Department: Department
+    }
+
+    class Interview {
+        + Id: int
+        + CandidateId: int
+        + LocationId: int?
+        + DateTime: DateTime?
+        + Notes: string?
+        + Interviewers: List<Volunteer>
+        + Answers: List<string>
+    }
+
+    class InterviewTemplate {
+        + Id: int
+        + Name: string
+        + Questions: List<string>
+        + Duration: int
+    }
+
+    class Location {
+        + Id: int
+        + Name: string
+        + Address: string
+    }
+
+    class BlockedPeriod {
+        + Id: int
+        + Start: DateTime
+        + Duration: TimeSpan
+        + LocationId: int
+        + RecruitmentCampaignId: int
+    }
+
+    class RecruitmentFormTemplate {
+        + Id: int
+        + Name: string
+        + Questions: List<string>
+    }
+
+    class VolunteerDisponibility {
+        + Id: int
+        + VolunteerId: int
+        + DateTime: DateTime
+        + LocationId: int
+    }
+}
+
+package "Shared Models" {
+    class PersonalInfo {
+        + Id: int
+        + Address: string
+        + Birthdate: DateOnly
+        + Gender: Gender
+        + StudyType: StudyType
+        + StudyLanguage: StudyLanguage
+        + Year: int
+        + FacebookProfile: string?
+        + InstagramProfile: string?
+        + Diet: Diet
+        + Allergies: string?
+        + ShirtSize: ShirtSize
+    }
+
+    enum RecruitingStatus {
+        Open
+        Scheduled
+        Pending
+        Rejected
+        Accepted
+    }
+
+    enum VolunteerStatus {
+        Active
+        Inactive
+    }
+
+    enum Department {
+        HumanResources
+        Events
+        ExternalRelations
+        ImageAndPR
+    }
+
+    enum Gender {
+        Male
+        Female
+        Other
+    }
+
+    enum StudyType {
+        Bachelor
+        Master
+        Doctorate
+    }
+
+    enum StudyLanguage {
+        Romanian
+        English
+        German
+        Hungarian
+    }
+
+    enum ShirtSize {
+        XS
+        S
+        M
+        L
+        XL
+        XXL
+        Special
+    }
+
+    enum Diet {
+        Omnivor
+        Vegetarian
+        Vegan
+    }
+}
+
+' Relationships
+RecruitmentCampaign "1" *-- "0..*" Candidate : contains
+RecruitmentCampaign "1" *-- "0..*" Volunteer : has
+RecruitmentCampaign "1" *-- "0..*" Location : has
+RecruitmentCampaign "1" *-- "0..*" BlockedPeriod : has
+RecruitmentCampaign "1" -- "1" InterviewTemplate : uses
+RecruitmentCampaign "1" -- "1" RecruitmentFormTemplate : uses
+
+Candidate "1" -- "0..*" Interview : scheduled for
+Candidate "1" *-- "1" PersonalInfo : has
+Candidate "1" -- "1" RecruitingStatus : has status
+
+Volunteer "1" *-- "1" PersonalInfo : has
+Volunteer "1" -- "1" VolunteerStatus : has status
+Volunteer "1" -- "1" Department : belongs to
+Volunteer "0..*" -- "0..*" Interview : conducts
+
+Interview "1" -- "0..1" Location : held at
+
+VolunteerDisponibility "1" -- "1" Volunteer : for
+VolunteerDisponibility "1" -- "1" Location : at
+
+BlockedPeriod "1" -- "1" Location : blocks
+
+PersonalInfo "1" -- "1" Gender : has
+PersonalInfo "1" -- "1" StudyType : has
+PersonalInfo "1" -- "1" StudyLanguage : has
+PersonalInfo "1" -- "1" Diet : has
+PersonalInfo "1" -- "1" ShirtSize : has
+
+@enduml

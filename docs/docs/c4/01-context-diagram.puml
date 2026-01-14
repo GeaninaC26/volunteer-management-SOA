@@ -1,0 +1,49 @@
+@startuml System Context Diagram
+skinparam rectangle {
+    BackgroundColor<<system>> #1168bd
+    BackgroundColor<<external>> #999999
+    FontColor white
+}
+skinparam actor {
+    BackgroundColor #08427b
+}
+
+title System Context Diagram - Volunteer Management System
+
+actor "Volunteer\nCoordinator" as coordinator
+actor "Candidate" as candidate
+actor "Volunteer" as volunteer
+actor "System\nAdministrator" as admin
+
+rectangle "Volunteer Management System" as system <<system>> {
+    note right
+        Manages volunteer recruitment campaigns,
+        candidate applications, interview scheduling,
+        and volunteer assignments for nonprofit
+        organizations.
+        
+        **Technology Stack:**
+        - ASP.NET Core microservices
+        - Vue.js microfrontends
+        - PostgreSQL database
+        - RabbitMQ & Kafka messaging
+    end note
+}
+
+rectangle "Google OAuth 2.0" as google <<external>>
+rectangle "Browser" as browser <<external>>
+
+coordinator --> system : Manages campaigns\nSchedules interviews\nReviews candidates
+candidate --> system : Submits application\nViews interview schedule
+volunteer --> system : Registers availability\nConducts interviews
+admin --> system : Configures system\nManages users
+
+system --> google : Authenticates users
+system ..> browser : Real-time updates\n(SignalR WebSocket)
+
+note bottom of google
+    External authentication provider
+    for secure user login
+end note
+
+@enduml

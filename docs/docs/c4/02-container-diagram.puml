@@ -1,0 +1,102 @@
+@startuml Container Diagram
+skinparam rectangle {
+    BackgroundColor<<webapp>> #438dd5
+    BackgroundColor<<api>> #85bbf0
+    BackgroundColor<<service>> #85bbf0
+    BackgroundColor<<database>> #23a3dd
+    BackgroundColor<<queue>> #f96854
+    FontColor white
+}
+
+title Container Diagram - Volunteer Management System
+
+actor "User\n(Coordinator/\nCandidate/\nVolunteer)" as user
+
+package "Volunteer Management System" {
+    
+    rectangle "Web Browser" as browser {
+        rectangle "Host Application\n[Vue.js + Vite]" as host <<webapp>>
+        rectangle "Campaigns App\n[Vue.js Microfrontend]" as campaigns <<webapp>>
+        rectangle "Registration App\n[Vue.js Microfrontend]" as registration <<webapp>>
+        rectangle "Scheduling App\n[Vue.js Microfrontend]" as scheduling <<webapp>>
+    }
+    
+    rectangle "NGINX\nReverse Proxy" as nginx <<api>>
+    
+    rectangle "API Gateway\n[ASP.NET Core 8.0]" as gateway <<api>> {
+        note right
+            - REST API endpoints
+            - CQRS pattern (MediatR)
+            - Authentication & Authorization
+            - JWT & OAuth 2.0
+        end note
+    }
+    
+    rectangle "Recruitment Service\n[ASP.NET Core 8.0]" as recruitment <<service>> {
+        note right
+            - Candidate management
+            - Interview scheduling
+            - Campaign management
+            - Business logic
+        end note
+    }
+    
+    rectangle "Notification Service\n[ASP.NET Core 8.0]" as notification <<service>> {
+        note right
+            - Real-time notifications
+            - SignalR hub
+            - Event processing
+        end note
+    }
+    
+    rectangle "PostgreSQL\nDatabase" as db <<database>>
+    
+    rectangle "RabbitMQ\nMessage Broker" as rabbitmq <<queue>> {
+        note right
+            - Synchronous RPC
+            - Request-Reply pattern
+        end note
+    }
+    
+    rectangle "Apache Kafka\nEvent Streaming" as kafka <<queue>> {
+        note right
+            Topics:
+            - candidate_updates
+            - campaign_updates
+            - campaign_volunteer_updates
+            - schedule_updates
+            - location_updates
+            - interview_template_updates
+            - recruitment_form_template_updates
+        end note
+    }
+}
+
+rectangle "Google OAuth 2.0" as google
+
+user --> browser : Uses\n(HTTPS)
+
+host ..> campaigns : Loads
+host ..> registration : Loads
+host ..> scheduling : Loads
+
+campaigns --> nginx : API Calls\n(HTTPS/JSON)
+registration --> nginx : API Calls\n(HTTPS/JSON)
+scheduling --> nginx : API Calls\n(HTTPS/JSON)
+
+nginx --> gateway : Routes /api/*
+nginx --> notification : Routes /notifications\n(WebSocket)
+
+gateway --> rabbitmq : Sends commands\n(AMQP RPC)
+gateway --> google : Authenticates\n(OAuth 2.0)
+
+rabbitmq --> recruitment : Delivers messages
+recruitment --> rabbitmq : Sends responses
+recruitment --> db : Reads/Writes\n(EF Core)
+recruitment --> kafka : Publishes events
+
+kafka --> notification : Consumes events
+notification --> scheduling : Push notifications\n(SignalR)
+notification --> campaigns : Push notifications\n(SignalR)
+
+@enduml

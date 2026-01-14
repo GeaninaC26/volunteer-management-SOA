@@ -1,0 +1,119 @@
+@startuml Deployment Diagram - C4 Style
+skinparam node {
+    BackgroundColor<<docker>> #2496ed
+    BackgroundColor<<container>> #85bbf0
+    FontColor white
+}
+
+title Deployment Diagram - Production Environment
+
+node "Docker Host [Linux]" <<docker>> {
+    
+    node "volunteer-network\n[Bridge Network]" {
+        
+        node "nginx:alpine\nPort: 8080" as nginx <<container>> {
+            artifact "nginx.conf" as nginx_conf
+        }
+        
+        node "frontend\n[Vue.js Build]" as frontend <<container>> {
+            artifact "Host App"
+            artifact "Campaigns"
+            artifact "Registration"
+            artifact "Scheduling"
+        }
+        
+        node "api-gateway\n[.NET 8]" as gateway <<container>> {
+            artifact "ApiGateway.dll"
+            artifact "appsettings.json"
+        }
+        
+        node "recruitment-service\n[.NET 8]" as recruitment <<container>> {
+            artifact "RecruitmentService.dll"
+            artifact "appsettings.json"
+        }
+        
+        node "notification-service\n[.NET 8]" as notification <<container>> {
+            artifact "NotificationService.dll"
+        }
+        
+        node "postgres:latest\nPort: 5432" as postgres <<container>> {
+            database "volunteer-management" as db
+            folder "./data/postgres" as pg_volume
+        }
+        
+        node "rabbitmq:4-management\nPorts: 5672, 15672" as rabbitmq <<container>> {
+            queue "recruitment_queue"
+        }
+        
+        node "kafka:4.1.1\nPorts: 9092, 9094" as kafka <<container>> {
+            queue "Kafka Topics"
+        }
+        
+        node "redpanda-console:latest\nPort: 7777" as console <<container>>
+        
+        node "init-data\n[Seeding Job]" as initdata <<container>>
+    }
+}
+
+cloud "Internet" {
+    actor "Users" as users
+}
+
+cloud "Google Cloud" {
+    component "OAuth 2.0" as google
+}
+
+users --> nginx : HTTPS (8080)
+
+nginx --> frontend : Static files
+nginx --> gateway : /api/*
+nginx --> notification : /notifications
+
+gateway --> rabbitmq : AMQP
+gateway --> google : OAuth
+
+rabbitmq --> recruitment : AMQP
+recruitment --> postgres : TCP
+recruitment --> kafka : Kafka
+
+kafka --> notification : Events
+kafka --> console : Monitoring
+
+notification --> frontend : WebSocket
+
+postgres --> pg_volume : Persist
+
+initdata --> nginx : HTTP (seed mock data)
+
+note right of nginx
+    **Entry Point**
+    - Routes traffic
+    - SSL termination
+    - Load balancing
+end note
+
+note right of postgres
+    **Persistent Storage**
+    - Volume mount for data
+    - Automatic backups
+    - Health checks
+end note
+
+note right of rabbitmq
+    **Synchronous Messaging**
+    - RPC pattern
+    - Correlation IDs
+    - 30s timeout
+end note
+
+note right of kafka
+    **Asynchronous Events**
+        - Topics such as:
+            candidate_updates, campaign_updates, campaign_volunteer_updates,
+            schedule_updates, location_updates, interview_template_updates,
+            recruitment_form_template_updates
+        - Durable logs
+        - Scalable consumers
+end note
+
+@enduml

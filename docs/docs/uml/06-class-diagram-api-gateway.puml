@@ -1,0 +1,232 @@
+@startuml API Gateway - Class Diagram
+
+title API Gateway Architecture - CQRS Pattern
+
+package "API Endpoints" {
+    class VolunteersEndpoints {
+        + MapVolunteersEndpoints(app: WebApplication): WebApplication
+        --
+        GET /api/volunteers
+        POST /api/volunteers
+        GET /api/volunteers/{id}
+        PATCH /api/volunteers/{id}
+        DELETE /api/volunteers/{id}
+        GET /api/volunteers/{id}/info
+        PUT /api/volunteers/{id}/info
+        PATCH /api/volunteers/{id}/info
+    }
+
+    class InterviewsEndpoints {
+        + MapInterviewsEndpoints(app: WebApplication)
+        --
+        GET /api/interviews
+        POST /api/interviews
+        GET /api/interviews/{id}
+        PATCH /api/interviews/{id}
+        DELETE /api/interviews/{id}
+    }
+
+    class RecruitmentCampaignsEndpoints {
+        + MapRecruitmentCampaignsEndpoints(app: WebApplication)
+        --
+        GET /api/campaigns
+        POST /api/campaigns
+        GET /api/campaigns/{id}
+        PATCH /api/campaigns/{id}
+        DELETE /api/campaigns/{id}
+        --
+        Nested under {cId}:
+        - /candidates/*
+        - /blocked_periods/*
+        - /locations/*
+        - /volunteers/*
+    }
+
+    class LocationsEndpoints {
+        + MapLocationsEndpoints(app: WebApplication)
+        --
+        GET /api/locations
+        POST /api/locations
+        GET /api/locations/{id}
+        PATCH /api/locations/{id}
+        DELETE /api/locations/{id}
+    }
+
+    class InterviewTemplatesEndpoints {
+        + MapInterviewTemplatesEndpoints(app: WebApplication)
+        --
+        GET /api/interview_templates
+        POST /api/interview_templates
+        GET /api/interview_templates/{id}
+        PATCH /api/interview_templates/{id}
+        DELETE /api/interview_templates/{id}
+    }
+
+    class RecruitmentFormTemplatesEndpoints {
+        + MapRecruitmentFormTemplatesEndpoints(app: WebApplication)
+        --
+        GET /api/recruitment_form_templates
+        POST /api/recruitment_form_templates
+        GET /api/recruitment_form_templates/{id}
+        PATCH /api/recruitment_form_templates/{id}
+        DELETE /api/recruitment_form_templates/{id}
+    }
+
+    class VolunteerDisponibilitiesEndpoints {
+        + MapVolunteerDisponibilitiesEndpoints(app: WebApplication)
+        --
+        GET /api/disponibilities
+        POST /api/disponibilities
+        GET /api/disponibilities/{id}
+        PATCH /api/disponibilities/{id}
+        DELETE /api/disponibilities/{id}
+    }
+}
+
+package "CQRS - Commands" {
+    interface IRequest<TResponse> {
+    }
+
+    class CreateVolunteerCommand {
+        + Volunteer: VolunteerDTO
+        --
+        implements IRequest<int>
+    }
+
+    class UpdateVolunteerCommand {
+        + Id: int
+        + Volunteer: VolunteerDTO
+        --
+        implements IRequest<int>
+    }
+
+    class DeleteVolunteerCommand {
+        + Id: int
+        --
+        implements IRequest<int>
+    }
+
+    class CreateCandidateCommand {
+        + Candidate: CandidateDTO
+        --
+        implements IRequest<int>
+    }
+}
+
+package "CQRS - Queries" {
+    class GetVolunteersQuery {
+        + Department: string?
+        + VolunteerStatus: string?
+        --
+        implements IRequest<List<VolunteerDTO>>
+    }
+
+    class GetVolunteerByIdQuery {
+        + Id: int
+        --
+        implements IRequest<VolunteerDTO?>
+    }
+
+    class GetCandidatesQuery {
+        + RecruitmentCampaignId: int?
+        + RecruitingStatus: string?
+        --
+        implements IRequest<List<CandidateDTO>>
+    }
+}
+
+package "CQRS - Handlers" {
+    class CreateVolunteerCommandHandler {
+        - _producer: RabbitMQProducer
+        - _logger: ILogger
+        --
+        + Handle(command: CreateVolunteerCommand): Task<int>
+    }
+
+    class GetVolunteersQueryHandler {
+        - _producer: RabbitMQProducer
+        - _logger: ILogger
+        --
+        + Handle(query: GetVolunteersQuery): Task<List<VolunteerDTO>>
+    }
+
+    interface IRequestHandler<TRequest, TResponse> {
+        + Handle(request: TRequest): Task<TResponse>
+    }
+}
+
+package "Messaging" {
+    class RabbitMQProducer {
+        - _hostName: string
+        - _rpcTimeout: TimeSpan
+        - _logger: ILogger
+        --
+        + CallAsync<TRequest, TResponse>(request, routingKey): Task<TResponse?>
+        - CreateConnection(): IConnection
+        - CreateChannel(): IChannel
+        - SetupReplyQueue(): string
+        - PublishRequest(request, replyQueue, correlationId)
+        - WaitForResponse(correlationId, timeout): Task<TResponse>
+    }
+
+    class Message<T> {
+        + ActionType: string
+        + Data: T
+    }
+}
+
+package "Authentication & Authorization" {
+    class AuthenticationMiddleware {
+        + JwtBearerAuthentication
+        + GoogleOAuthAuthentication
+        + CookieAuthentication
+    }
+
+    class AuthorizationPolicies {
+        + AdminOnly: AuthorizationPolicy
+        + Public: AuthorizationPolicy
+    }
+}
+
+package "MediatR Library" {
+    interface IMediator {
+        + Send<TResponse>(request: IRequest<TResponse>): Task<TResponse>
+    }
+}
+
+' Relationships
+VolunteersEndpoints ..> IMediator : uses
+CandidatesEndpoints ..> IMediator : uses
+InterviewsEndpoints ..> IMediator : uses
+
+IMediator ..> CreateVolunteerCommand : dispatches
+IMediator ..> GetVolunteersQuery : dispatches
+IMediator ..> CreateCandidateCommand : dispatches
+
+CreateVolunteerCommandHandler ..|> IRequestHandler : implements
+GetVolunteersQueryHandler ..|> IRequestHandler : implements
+
+CreateVolunteerCommand ..|> IRequest : implements
+GetVolunteersQuery ..|> IRequest : implements
+CreateCandidateCommand ..|> IRequest : implements
+
+CreateVolunteerCommandHandler --> RabbitMQProducer : uses
+GetVolunteersQueryHandler --> RabbitMQProducer : uses
+
+RabbitMQProducer ..> Message : creates
+
+VolunteersEndpoints ..> AuthorizationPolicies : protected by
+
+note top of IMediator
+  MediatR handles command/query
+  routing to appropriate handlers
+end note
+
+note right of RabbitMQProducer
+  Implements RPC pattern:
+  1. Send request to RabbitMQ
+  2. Wait for reply with CorrelationId
+  3. Return response to handler
+end note
+
+@enduml

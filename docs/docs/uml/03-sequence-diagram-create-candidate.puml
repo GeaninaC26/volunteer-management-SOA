@@ -1,0 +1,76 @@
+@startuml Sequence Diagram - Create Candidate
+autonumber
+
+title Create Candidate Flow - Synchronous RPC Pattern
+
+actor "User" as user
+participant "Frontend\n(Vue.js)" as frontend
+participant "NGINX" as nginx
+participant "API Gateway" as gateway
+participant "RabbitMQ" as rabbitmq
+participant "Recruitment\nService" as recruitment
+database "PostgreSQL" as db
+participant "Kafka" as kafka
+participant "Notification\nService" as notification
+
+user -> frontend: Fill candidate form\nand submit
+activate frontend
+
+frontend -> nginx: POST /api/candidates\n(Candidate DTO, JWT Token)
+activate nginx
+
+nginx -> gateway: Forward POST /api/candidates
+activate gateway
+
+gateway -> gateway: Validate JWT Token
+gateway -> gateway: Check Authorization
+
+gateway -> gateway: Create CreateCandidateCommand\n(CQRS Pattern)
+
+gateway -> rabbitmq: Publish RPC Request\n(recruitment_queue,\nCorrelationId, ReplyTo)
+activate rabbitmq
+
+rabbitmq -> recruitment: Deliver message
+activate recruitment
+
+recruitment -> recruitment: Deserialize command
+recruitment -> recruitment: Validate candidate data
+
+recruitment -> db: INSERT INTO candidates
+activate db
+db --> recruitment: Candidate created (ID)
+deactivate db
+
+recruitment -> kafka: Publish to topic\n"candidate_updates"\n(campaign name as payload)
+activate kafka
+kafka --> recruitment: Published
+deactivate kafka
+
+recruitment -> rabbitmq: Send RPC Response\n(CorrelationId, Candidate ID)
+rabbitmq --> gateway: Deliver response
+deactivate rabbitmq
+deactivate recruitment
+
+gateway --> nginx: HTTP 200 OK\n(Candidate ID)
+deactivate gateway
+
+nginx --> frontend: HTTP 200 OK\n(Candidate ID)
+deactivate nginx
+
+frontend --> user: Show success message
+deactivate frontend
+
+... Asynchronous Notification Flow ...
+
+kafka -> notification: Consume from topic\n"candidate_updates"
+activate notification
+
+notification -> notification: Route notification\nto pages by URL pattern
+notification -> frontend: SignalR Push\nnotification type:\n"candidate_update"
+activate frontend
+
+frontend --> user: Refresh data UI
+deactivate frontend
+deactivate notification
+
+@enduml

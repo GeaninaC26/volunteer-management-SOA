@@ -1,0 +1,197 @@
+@startuml Package Diagram - System Structure
+
+title Package Diagram - Volunteer Management System
+
+package "Frontend Layer" #lightblue {
+  package "host" {
+    [Module Federation\nHost Application]
+    [Shared Components]
+    [Authentication State]
+  }
+  
+  package "campaigns" {
+    [Campaign Management\nMicrofrontend]
+    [Campaign List View]
+    [Campaign Detail View]
+  }
+  
+  package "registration" {
+    [Registration\nMicrofrontend]
+    [Application Form]
+    [Candidate Portal]
+  }
+  
+  package "scheduling" {
+    [Scheduling\nMicrofrontend]
+    [Calendar View]
+    [Interview Scheduler]
+  }
+}
+
+package "API Layer" #lightgreen {
+  package "api-gateway" {
+    package "API.Endpoints" {
+      [Volunteers Endpoints]
+      [Candidates Endpoints]
+      [Interviews Endpoints]
+      [Campaigns Endpoints]
+      [Locations Endpoints]
+    }
+    
+    package "CQRS" {
+      [Commands]
+      [Queries]
+      [Handlers]
+    }
+    
+    package "Messaging" {
+      [RabbitMQ Producer]
+      [Message Models]
+    }
+    
+    package "Authentication" {
+      [JWT Bearer Auth]
+      [Google OAuth]
+      [Cookie Auth]
+      [Authorization Policies]
+    }
+  }
+}
+
+package "Business Services Layer" #lightyellow {
+  package "recruitment-service" {
+    package "Services" {
+      [Candidate Service]
+      [Volunteer Service]
+      [Interview Service]
+      [Recruitment Service]
+      [Location Service]
+      [Interview Template Service]
+      [Form Template Service]
+      [Disponibility Service]
+    }
+    
+    package "Messaging" {
+      [RabbitMQ Listener]
+      [Kafka Producer]
+    }
+    
+    package "DatabaseUtils" {
+      [Data Context]
+      [Migrations]
+    }
+  }
+  
+  package "notification-service" {
+    package "Hubs" {
+      [Notification Hub\n(SignalR)]
+    }
+    
+    package "Services" {
+      [Notification Service]
+      [Kafka Consumer]
+    }
+  }
+}
+
+package "Shared Layer" #lightgray {
+  package "VolunteerManagement.Shared" {
+    package "Model" {
+      [Domain Entities]
+      [DTOs]
+      [Patch DTOs]
+      [Enums]
+    }
+  }
+}
+
+package "Infrastructure Layer" #pink {
+  package "Message Brokers" {
+    database "RabbitMQ" as rabbitmq {
+      [recruitment_queue]
+    }
+    
+    database "Apache Kafka" as kafka {
+      [notifications topic]
+    }
+  }
+  
+  package "Data Storage" {
+    database "PostgreSQL" as postgres {
+      [volunteer-management DB]
+    }
+  }
+  
+  package "Reverse Proxy" {
+    [NGINX]
+  }
+}
+
+' Dependencies - Frontend
+[host] ..> [campaigns] : loads
+[host] ..> [registration] : loads
+[host] ..> [scheduling] : loads
+
+[campaigns] --> [NGINX] : HTTP/HTTPS
+[registration] --> [NGINX] : HTTP/HTTPS
+[scheduling] --> [NGINX] : HTTP/HTTPS
+[scheduling] --> [Notification Hub\n(SignalR)] : WebSocket
+
+' Dependencies - API Gateway
+[NGINX] --> [Volunteers Endpoints] : routes
+[NGINX] --> [Candidates Endpoints] : routes
+[NGINX] --> [Interviews Endpoints] : routes
+
+[Volunteers Endpoints] ..> [Commands] : uses
+[Volunteers Endpoints] ..> [Queries] : uses
+[Candidates Endpoints] ..> [Commands] : uses
+[Interviews Endpoints] ..> [Commands] : uses
+
+[Commands] --> [Handlers] : processed by
+[Queries] --> [Handlers] : processed by
+
+[Handlers] --> [RabbitMQ Producer] : uses
+[RabbitMQ Producer] --> rabbitmq : publishes to
+
+[Volunteers Endpoints] ..> [Authentication] : protected by
+
+' Dependencies - Recruitment Service
+rabbitmq --> [RabbitMQ Listener] : delivers to
+[RabbitMQ Listener] --> [Candidate Service] : delegates
+[RabbitMQ Listener] --> [Volunteer Service] : delegates
+[RabbitMQ Listener] --> [Interview Service] : delegates
+
+[Candidate Service] --> [Data Context] : uses
+[Volunteer Service] --> [Data Context] : uses
+[Interview Service] --> [Data Context] : uses
+
+[Candidate Service] --> [Kafka Producer] : publishes events
+[Volunteer Service] --> [Kafka Producer] : publishes events
+[Interview Service] --> [Kafka Producer] : publishes events
+
+[Kafka Producer] --> kafka : produces to
+
+[Data Context] --> postgres : reads/writes
+
+' Dependencies - Notification Service
+kafka --> [Kafka Consumer] : delivers to
+[Kafka Consumer] --> [Notification Service] : processes
+[Notification Service] --> [Notification Hub\n(SignalR)] : broadcasts
+
+' Dependencies - Shared
+[Volunteers Endpoints] ..> [Domain Entities] : uses
+[Handlers] ..> [DTOs] : uses
+[Candidate Service] ..> [Domain Entities] : uses
+[Data Context] ..> [Domain Entities] : maps
+
+note right of rabbitmq
+  Synchronous RPC
+  Request-Response pattern
+end note
+
+note right of kafka
+  Asynchronous Events
+  Pub-Sub pattern
+end note
+
+@enduml

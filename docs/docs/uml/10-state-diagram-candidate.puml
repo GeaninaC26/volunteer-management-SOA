@@ -1,0 +1,78 @@
+@startuml Candidate State Machine
+
+title Candidate Lifecycle - State Diagram
+
+[*] --> Open : Candidate submits\napplication
+
+state "Open" as Open
+state "Scheduled" as Scheduled
+state "Pending" as Pending
+state "Accepted" as Accepted
+state "Rejected" as Rejected
+
+Open --> Scheduled : Schedule interview
+
+Scheduled --> Pending : Interview conducted
+
+Pending --> Accepted : Approve candidate\n[Meets requirements]
+
+Pending --> Rejected : Reject candidate\n[Does not meet requirements]
+
+Scheduled --> Scheduled : Reschedule interview
+
+Open --> Rejected : Reject without\ninterview\n[Does not meet\nminimum requirements]
+
+Accepted --> [*] : Convert to Volunteer\n(Creates new Volunteer entity)
+
+Rejected --> [*] : Archive candidate\n(No volunteer created)
+
+note left of Open
+  **Triggers:**
+  - Candidate registration
+  - Form submission
+  
+  **Actions:**
+  - Validate application
+  - Publish to "candidate_updates" topic
+end note
+
+note right of Scheduled
+  **Triggers:**
+  - Coordinator schedules interview
+  
+  **Actions:**
+  - Create interview record
+  - Publish to "schedule_updates" topic
+end note
+
+note right of Pending
+  **Triggers:**
+  - Interview completion
+  
+  **Actions:**
+  - Store interview notes
+  - Update timestamp
+  - Await coordinator decision
+end note
+
+note right of Accepted
+  **Triggers:**
+  - Coordinator approval
+  
+  **Actions:**
+  - Create new Volunteer entity
+  - Copy candidate data to volunteer
+  - Publish to "campaign_volunteer_updates" topic
+end note
+
+note left of Rejected
+  **Triggers:**
+  - Coordinator rejection
+  
+  **Actions:**
+  - Archive candidate record
+  - NO volunteer entity created
+  - Publish to "candidate_updates" topic
+end note
+
+@enduml

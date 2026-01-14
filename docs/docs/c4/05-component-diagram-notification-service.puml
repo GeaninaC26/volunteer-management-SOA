@@ -1,0 +1,65 @@
+@startuml Component Diagram - Notification Service
+skinparam component {
+    BackgroundColor<<consumer>> #ffc570
+    BackgroundColor<<hub>> #85bbf0
+    BackgroundColor<<service>> #c9e2ae
+    FontColor black
+}
+
+title Component Diagram - Notification Service Container
+
+package "Notification Service [ASP.NET Core]" {
+    
+    component "Kafka\nConsumer" as consumer <<consumer>>
+    
+    component "Notification\nService" as notif_svc <<service>> {
+        note right
+            - Transforms events to notifications
+            - Determines recipients
+            - Formats messages
+            - Manages notification channels
+        end note
+    }
+    
+    component "SignalR\nHub" as hub <<hub>> {
+        note right
+            - Manages WebSocket connections
+            - Broadcasts to specific users/groups
+            - Maintains connection state
+            - Handles reconnections
+        end note
+    }
+}
+
+component "Kafka" as kafka
+component "Frontend\nApplications" as frontend
+
+kafka --> consumer : Delivers events\n(Kafka protocol)
+
+consumer --> notif_svc : ProcessEvent()
+
+notif_svc --> hub : SendNotificationAsync()
+
+hub --> frontend : Push notification\n(WebSocket)
+
+note right of consumer
+    Subscribes to all topics:
+    - candidate_updates
+    - campaign_updates
+    - campaign_volunteer_updates
+    - schedule_updates
+    - location_updates
+    - interview_template_updates
+    - recruitment_form_template_updates
+    
+    Routes notifications by topic to pages:
+    - candidate_update -> /campaigns/[id], /schedule_interviews/[id]
+    - campaign_update -> /campaigns, /campaigns/[id], /schedule_interviews/[id]
+    - campaign_volunteer_update -> /campaigns/[id], /schedule_interviews/[id]
+    - schedule_update -> /schedule_interviews
+    - location_update -> /campaigns
+    - interview_template_update -> /campaigns
+    - recruitment_form_template_update -> /campaigns
+end note
+
+@enduml

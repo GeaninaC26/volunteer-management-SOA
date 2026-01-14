@@ -1,0 +1,75 @@
+@startuml Authentication Flow - OAuth 2.0 with Google
+autonumber
+
+title Authentication Flow - Google OAuth 2.0
+
+actor "User" as user
+participant "Frontend" as frontend
+participant "NGINX" as nginx
+participant "API Gateway" as gateway
+participant "Google\nOAuth" as google
+
+user -> frontend: Click "Login with Google"
+activate frontend
+
+frontend -> nginx: Redirect to\n/api/auth/google
+activate nginx
+
+nginx -> gateway: Forward auth request
+activate gateway
+
+gateway -> google: Redirect to Google OAuth\n(ClientId, Scope, RedirectUri)
+activate google
+
+google --> user: Show Google login page
+user -> google: Enter credentials\nand authorize
+
+google -> gateway: Callback with\nAuthorization Code
+deactivate google
+
+gateway -> google: Exchange code for\nAccess Token & ID Token
+activate google
+google --> gateway: Access Token & ID Token
+deactivate google
+
+gateway -> gateway: Validate ID Token\n(Signature, Issuer, Audience)
+
+gateway -> gateway: Extract user claims\n(email, name, picture)
+
+gateway -> gateway: Check if email in\nAdminEmails list
+
+gateway -> gateway: Create authentication cookie\n(Encrypted, HttpOnly, SameSite)
+
+gateway --> nginx: Set-Cookie header\nRedirect to /
+deactivate gateway
+
+nginx --> frontend: 302 Redirect with cookie
+deactivate nginx
+
+frontend -> nginx: GET / (with cookie)
+activate nginx
+
+nginx -> gateway: Forward request with cookie
+activate gateway
+
+gateway -> gateway: Validate cookie
+gateway -> gateway: Restore user session
+
+gateway --> nginx: 200 OK with user info
+deactivate gateway
+
+nginx --> frontend: 200 OK
+deactivate nginx
+
+frontend --> user: Show authenticated UI
+deactivate frontend
+
+note right of gateway
+  Subsequent API requests include
+  the authentication cookie.
+  
+  JWT Bearer tokens are also
+  supported for API clients.
+end note
+
+@enduml

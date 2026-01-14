@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UML Documentation - Volunteer Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .intro {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .intro h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        .diagram-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .diagram-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .diagram-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .diagram-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .diagram-info {
+            padding: 1.5rem;
+        }
+        
+        .diagram-info h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+        
+        .diagram-info p {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+        
+        .diagram-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .diagram-links a {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-png {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .btn-png:hover {
+            background: #38a169;
+        }
+        
+        .btn-source {
+            background: #ed8936;
+            color: white;
+        }
+        
+        .btn-source:hover {
+            background: #dd6b20;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            background: white;
+            margin-top: 3rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #f0f0f0;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .diagram-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>UML Documentation</h1>
+        <p>Volunteer Management System - Service-Oriented Architecture</p>
+    </header>
+
+    <div class="container">
+        <div class="intro">
+            <h2>About This Documentation</h2>
+            <p>
+                This collection of UML diagrams provides comprehensive documentation for the Volunteer Management System,
+                a microservices-based application built with Service-Oriented Architecture (SOA) principles.
+                The system manages volunteer recruitment campaigns, candidates, interviews, and volunteer assignments.
+            </p>
+            <p style="margin-top: 1rem;">
+                <strong>Technologies:</strong> ASP.NET Core 8.0, Vue.js, RabbitMQ, Apache Kafka, PostgreSQL, SignalR, Docker
+            </p>
+        </div>
+
+        <div class="diagram-grid">
+            <div class="diagram-card">
+                <img src="Volunteer Management System - Component Diagram.png" alt="Component Diagram">
+                <div class="diagram-info">
+                    <h3>Component Diagram</h3>
+                    <span class="badge">Structural</span>
+                    <p>High-level architecture showing frontend microfrontends, backend microservices, message brokers (RabbitMQ, Kafka), and data storage components with their interactions.</p>
+                    <div class="diagram-links">
+                        <a href="Volunteer Management System - Component Diagram.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="01-component-diagram.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Domain Model - Class Diagram.png" alt="Domain Model">
+                <div class="diagram-info">
+                    <h3>Domain Model - Class Diagram</h3>
+                    <span class="badge">Structural</span>
+                    <p>Core business entities including RecruitmentCampaign, Candidate, Volunteer, Interview, and their relationships. Shows domain-driven design with aggregates and value objects.</p>
+                    <div class="diagram-links">
+                        <a href="Domain Model - Class Diagram.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="02-class-diagram-domain-model.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Sequence Diagram - Create Candidate.png" alt="Create Candidate Sequence">
+                <div class="diagram-info">
+                    <h3>Create Candidate - Sequence Diagram</h3>
+                    <span class="badge">Behavioral</span>
+                    <p>Detailed flow for creating a candidate using CQRS pattern, RabbitMQ RPC for synchronous communication, and Kafka for asynchronous event publishing.</p>
+                    <div class="diagram-links">
+                        <a href="Sequence Diagram - Create Candidate.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="03-sequence-diagram-create-candidate.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Authentication Flow - OAuth 2.0 with Google.png" alt="Authentication Flow">
+                <div class="diagram-info">
+                    <h3>Authentication - OAuth 2.0</h3>
+                    <span class="badge">Behavioral</span>
+                    <p>OAuth 2.0 authentication flow with Google, showing authorization code exchange, token validation, and cookie-based session creation with role verification.</p>
+                    <div class="diagram-links">
+                        <a href="Authentication Flow - OAuth 2.0 with Google.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="04-sequence-diagram-authentication.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Deployment Diagram.png" alt="Deployment Diagram">
+                <div class="diagram-info">
+                    <h3>Deployment Diagram</h3>
+                    <span class="badge">Physical</span>
+                    <p>Docker Compose deployment showing all containers, networks, volumes, and port mappings. Includes NGINX, microservices, databases, message brokers, and auxiliary services (Kafka UI and init-data seeding job).</p>
+                    <div class="diagram-links">
+                        <a href="Deployment Diagram.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="05-deployment-diagram.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="API Gateway - Class Diagram.png" alt="API Gateway">
+                <div class="diagram-info">
+                    <h3>API Gateway - Class Diagram</h3>
+                    <span class="badge">Structural</span>
+                    <p>CQRS architecture of the API Gateway showing endpoints, commands, queries, MediatR handlers, RabbitMQ producer, and authentication mechanisms.</p>
+                    <div class="diagram-links">
+                        <a href="API Gateway - Class Diagram.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="06-class-diagram-api-gateway.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Recruitment Service - Class Diagram.png" alt="Recruitment Service">
+                <div class="diagram-info">
+                    <h3>Recruitment Service - Class Diagram</h3>
+                    <span class="badge">Structural</span>
+                    <p>Internal architecture showing RabbitMQ listener, domain services, Entity Framework Core data access, and Kafka event publishing.</p>
+                    <div class="diagram-links">
+                        <a href="Recruitment Service - Class Diagram.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="07-class-diagram-recruitment-service.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Schedule Interview Flow.png" alt="Schedule Interview">
+                <div class="diagram-info">
+                    <h3>Schedule Interview - Sequence Diagram</h3>
+                    <span class="badge">Behavioral</span>
+                    <p>Complex business flow with validations for volunteer availability, location capacity, blocked periods, and interviewer conflicts with transactional integrity.</p>
+                    <div class="diagram-links">
+                        <a href="Schedule Interview Flow.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="08-sequence-diagram-schedule-interview.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Recruitment Process - Activity Diagram.png" alt="Recruitment Process">
+                <div class="diagram-info">
+                    <h3>Recruitment Process - Activity Diagram</h3>
+                    <span class="badge">Behavioral</span>
+                    <p>End-to-end recruitment workflow from campaign creation through candidate application, interview scheduling, decision making, to volunteer conversion.</p>
+                    <div class="diagram-links">
+                        <a href="Recruitment Process - Activity Diagram.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="09-activity-diagram-recruitment-process.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Candidate State Machine.png" alt="Candidate State Machine">
+                <div class="diagram-info">
+                    <h3>Candidate State Machine</h3>
+                    <span class="badge">Behavioral</span>
+                    <p>Lifecycle of a candidate entity showing states (Open, Scheduled, Pending, Accepted, Rejected), transitions, and domain events published at relevant state changes.</p>
+                    <div class="diagram-links">
+                        <a href="Candidate State Machine.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="10-state-diagram-candidate.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-card">
+                <img src="Package Diagram - System Structure.png" alt="Package Diagram">
+                <div class="diagram-info">
+                    <h3>Package Diagram</h3>
+                    <span class="badge">Structural</span>
+                    <p>System structure organized in layers: Frontend, API, Business Services, Shared, and Infrastructure with clear dependency relationships.</p>
+                    <div class="diagram-links">
+                        <a href="Package Diagram - System Structure.png" target="_blank" class="btn-png">View PNG</a>
+                        <a href="11-package-diagram.puml" target="_blank" class="btn-source">Source</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="intro">
+            <h2>Architecture Patterns</h2>
+            <ul style="margin-left: 2rem; margin-top: 1rem;">
+                <li><strong>CQRS:</strong> Command Query Responsibility Segregation in API Gateway</li>
+                <li><strong>Event-Driven Architecture:</strong> Kafka for asynchronous event distribution</li>
+                <li><strong>Service-Oriented Architecture:</strong> Microservices with clear boundaries</li>
+                <li><strong>RPC Pattern:</strong> Synchronous communication via RabbitMQ</li>
+                <li><strong>Microfrontends:</strong> Module Federation for independent frontend deployment</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <p>Volunteer Management System - UML Documentation</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Generated with PlantUML | January 2026</p>
+    </footer>
+</body>
+</html>

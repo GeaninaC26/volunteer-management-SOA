@@ -1,0 +1,90 @@
+@startuml Component Diagram - API Gateway
+skinparam component {
+    BackgroundColor<<controller>> #85bbf0
+    BackgroundColor<<handler>> #b3d4fc
+    BackgroundColor<<service>> #ffc570
+    BackgroundColor<<middleware>> #c9e2ae
+    FontColor black
+}
+
+title Component Diagram - API Gateway Container
+
+package "API Gateway [ASP.NET Core]" {
+    
+    component "Volunteers\nEndpoints" as volunteers_ep <<controller>>
+    component "Interviews\nEndpoints" as interviews_ep <<controller>>
+    component "Campaigns\nEndpoints" as campaigns_ep <<controller>> {
+        note right
+            Nested endpoints:
+            - /api/campaigns/{cId}/candidates
+            - /api/campaigns/{cId}/blocked_periods
+            - /api/campaigns/{cId}/locations
+            - /api/campaigns/{cId}/volunteers
+        end note
+    }
+    component "Locations\nEndpoints" as locations_ep <<controller>>
+    component "Interview Templates\nEndpoints" as templates_ep <<controller>>
+    component "Form Templates\nEndpoints" as forms_ep <<controller>>
+    component "Disponibilities\nEndpoints" as disp_ep <<controller>>
+    component "Auth\nEndpoints" as auth_ep <<controller>>
+    
+    package "CQRS Layer" {
+        component "Command\nHandlers" as cmd_handlers <<handler>>
+        component "Query\nHandlers" as query_handlers <<handler>>
+        component "MediatR\nPipeline" as mediator <<service>>
+    }
+    
+    package "Messaging" {
+        component "RabbitMQ\nProducer" as rabbitmq_producer <<service>> {
+            note right
+                - Creates RPC requests
+                - Manages correlation IDs
+                - Handles timeouts
+                - Waits for responses
+            end note
+        }
+    }
+    
+    package "Authentication & Authorization" {
+        component "JWT Bearer\nAuthentication" as jwt <<middleware>>
+        component "Google OAuth\nAuthentication" as oauth <<middleware>>
+        component "Cookie\nAuthentication" as cookie <<middleware>>
+        component "Authorization\nPolicies" as authz <<middleware>>
+    }
+}
+
+component "Frontend\nApplications" as frontend
+component "RabbitMQ" as rabbitmq
+component "Google OAuth" as google
+
+frontend --> volunteers_ep : HTTP GET/POST/PATCH/DELETE
+frontend --> interviews_ep : HTTP GET/POST/PATCH/DELETE
+frontend --> campaigns_ep : HTTP GET/POST/PATCH/DELETE
+frontend --> locations_ep : HTTP GET/POST
+frontend --> templates_ep : HTTP GET/POST/PATCH/DELETE
+frontend --> forms_ep : HTTP GET/POST/PATCH/DELETE
+frontend --> disp_ep : HTTP GET/POST/PATCH/DELETE
+frontend --> auth_ep : HTTP POST (login)
+
+volunteers_ep --> jwt : Validates token
+volunteers_ep --> cookie : Validates session
+volunteers_ep --> authz : Checks permissions
+
+auth_ep --> oauth : Initiates OAuth flow
+auth_ep --> google : Exchanges code for token
+
+volunteers_ep --> mediator : Sends commands/queries
+interviews_ep --> mediator : Sends commands/queries
+interviews_ep --> mediator : Sends commands/queries
+campaigns_ep --> mediator : Sends commands/queries
+
+mediator --> cmd_handlers : Routes commands
+mediator --> query_handlers : Routes queries
+
+cmd_handlers --> rabbitmq_producer : Sends RPC request
+query_handlers --> rabbitmq_producer : Sends RPC request
+
+rabbitmq_producer --> rabbitmq : AMQP (with correlation ID)
+rabbitmq --> rabbitmq_producer : AMQP (response)
+
+@enduml
